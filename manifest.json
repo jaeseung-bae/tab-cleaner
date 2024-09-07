@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Tab Cleaner",
+  "version": "0.1",
+  "description": "Closes duplicate tabs in Chrome and move to the original tab",
+  "permissions": [
+    "tabs",
+    "storage"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}
