@@ -1,30 +1,31 @@
 chrome.tabs.onCreated.addListener((tab) => {
-  const currentTab = tab;
-  const pendingUrl = currentTab.pendingUrl;
-  chrome.tabs.query({ url: pendingUrl }, (tabs) => {
-    tabs.forEach((tab) => {
-      if (tab.url === pendingUrl) {
-        chrome.tabs.remove(currentTab.id);
-        chrome.tabs.update(tab.id, { active: true });
+    const currentTab = tab;
+    chrome.tabs.query({url: currentTab.pendingUrl}, (tabs) => {
+        let tabIdToClose = undefined;
+        tabs.forEach((tab) => {
+            if (tab.url === currentTab.pendingUrl) {
+                tabIdToClose = currentTab.id;
+                chrome.tabs.update(tab.id, {active: true});
+            }
+        });
+        if (tabIdToClose) {
+            chrome.tabs.remove(tabIdToClose);
         }
     });
-  });;
 });
 
-chrome.tabs.onUpdated.addListener((_, changeInfo) => {
-  if (changeInfo.status === 'complete') {
-    chrome.tabs.query({}, (tabs) => {
-      const tabIdByUrl = {}; // k: url, v: tabId
-      tabs.forEach((tab) => {
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    if (changeInfo.status === 'complete') {
         const url = tab.url;
-        if (tabIdByUrl[url]) {
-          chrome.tabs.update(tabIdByUrl[url], { active: true }, () => {
-            chrome.tabs.remove(tab.id);
-          });
-          return;
-        }
-        tabIdByUrl[url] = tab.id;
-      });
-    });
-  }
+        chrome.tabs.query({url}, async (tabs) => {
+            if (!tabs.length) {
+                return;
+            }
+            const tab = tabs[0];
+            await chrome.tabs.update(tab.id, {active: true});
+            tabs.slice(1).forEach((tab) => {
+                chrome.tabs.remove(tab.id);
+            });
+        });
+    }
 });
