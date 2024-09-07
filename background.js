@@ -1,17 +1,12 @@
-chrome.tabs.onCreated.addListener((tab) => {
-    const currentTab = tab;
-    chrome.tabs.query({url: currentTab.pendingUrl}, (tabs) => {
-        let tabIdToClose = undefined;
-        tabs.forEach((tab) => {
-            if (tab.url === currentTab.pendingUrl) {
-                tabIdToClose = currentTab.id;
-                chrome.tabs.update(tab.id, {active: true});
-            }
-        });
-        if (tabIdToClose) {
-            chrome.tabs.remove(tabIdToClose);
-        }
-    });
+chrome.tabs.onCreated.addListener(async (currentTab) => {
+    const currentUrl = currentTab.url? currentTab.url : currentTab.pendingUrl;
+    const tabs = await chrome.tabs.query({url: currentUrl});
+    
+    const existingTab = tabs.find(tab => tab.url === currentUrl);
+    if (existingTab) {
+        await chrome.tabs.update(existingTab.id, {active: true});
+        await chrome.tabs.remove(currentTab.id);
+    }
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
